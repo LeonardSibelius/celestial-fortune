@@ -1,4 +1,13 @@
 import { Assets, Graphics, Sprite, type Container, type Texture } from 'pixi.js';
+import starUrl from '../factory/star.png';
+import moonUrl from '../factory/moon.png';
+import galaxyUrl from '../factory/galaxy.png';
+import saturnUrl from '../factory/saturn.png';
+import marsUrl from '../factory/mars.png';
+import crownUrl from '../factory/crown.png';
+import sevenUrl from '../factory/seven.png';
+import wildUrl from '../factory/wild.png';
+import scatterUrl from '../factory/scatter.png';
 
 /**
  * Procedural symbol art for the grey-box (P2), keyed by the model's symbol ids
@@ -128,18 +137,28 @@ export function drawSymbol(g: Graphics, id: string, cell: number): void {
 }
 
 /**
- * UE-rendered symbol atlases drop in here in P3 — keyed by model symbol id,
- * with `contentFraction` = the share of the square texture the opaque art fills
- * (so a sprite sits at the same visual size as the drawn symbols). Empty for the
- * P2 grey-box; the proven pipeline (src/factory/coin_ue.png) gets re-wired to
- * the real celestial symbols once the factory renders them.
+ * UE-rendered symbol art (P3), keyed by model symbol id. `contentFraction` is
+ * the opaque art's largest dimension as a share of the 512px texture (measured
+ * from each render), so every symbol sizes to the same inner box as the drawn
+ * fallbacks. When a texture is present it's used; otherwise `createSymbol` falls
+ * back to the procedural `Graphics` drawing.
  */
 interface TexturedSymbol {
   readonly url: string;
   readonly contentFraction: number;
 }
 
-export const SYMBOL_TEXTURES: Readonly<Record<string, TexturedSymbol>> = {};
+export const SYMBOL_TEXTURES: Readonly<Record<string, TexturedSymbol>> = {
+  star: { url: starUrl, contentFraction: 0.512 },
+  moon: { url: moonUrl, contentFraction: 0.879 },
+  galaxy: { url: galaxyUrl, contentFraction: 0.902 },
+  saturn: { url: saturnUrl, contentFraction: 0.939 },
+  mars: { url: marsUrl, contentFraction: 0.82 },
+  crown: { url: crownUrl, contentFraction: 0.863 },
+  seven: { url: sevenUrl, contentFraction: 0.682 },
+  wild: { url: wildUrl, contentFraction: 0.918 },
+  scatter: { url: scatterUrl, contentFraction: 0.877 },
+};
 
 /** Load every UE-rendered symbol texture. Returns an id -> Texture map. */
 export async function loadSymbolTextures(): Promise<Map<string, Texture>> {
