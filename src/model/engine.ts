@@ -1,10 +1,27 @@
-import sheetData from './parsheet.json';
+import giftSheet from './parsheet.gift.json';
+import casinoSheet from './parsheet.casino.json';
 import type { ParSheet, Position, RoundResult, SpinResult, WinningLine } from './types';
 import { makeContext, evaluateLine, type EvalContext } from './lines';
 import { Rng } from './rng';
 
-/** The bundled par sheet — the single source of truth for the math. */
-export const PARSHEET = sheetData as unknown as ParSheet;
+/** The two bundled par sheets. The model is sheet-parametric — pass either. */
+export const GIFT_PARSHEET = giftSheet as unknown as ParSheet;
+export const CASINO_PARSHEET = casinoSheet as unknown as ParSheet;
+
+/** Default sheet (the web-prototype gift economics). */
+export const PARSHEET = GIFT_PARSHEET;
+
+export interface SheetOption {
+  readonly key: string;
+  readonly label: string;
+  readonly sheet: ParSheet;
+}
+
+/** Selectable sheets for the HUD, in display order. */
+export const SHEETS: readonly SheetOption[] = [
+  { key: 'gift', label: 'GIFT', sheet: GIFT_PARSHEET },
+  { key: 'casino', label: 'CASINO', sheet: CASINO_PARSHEET },
+];
 
 /** Runaway safety only; with q≈2% this is never approached. */
 const MAX_FREE_SPINS_PER_ROUND = 100_000;

@@ -5,7 +5,14 @@
  * of truth; the UE/C++ port reads the same file.
  */
 export { Rng } from './rng';
-export { SlotEngine, PARSHEET } from './engine';
+export {
+  SlotEngine,
+  PARSHEET,
+  GIFT_PARSHEET,
+  CASINO_PARSHEET,
+  SHEETS,
+  type SheetOption,
+} from './engine';
 export { computeTheoretical, type Theory } from './theory';
 export { makeContext, evaluateLine, type EvalContext, type LineEval } from './lines';
 export type {

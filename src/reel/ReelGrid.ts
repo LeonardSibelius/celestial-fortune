@@ -43,6 +43,10 @@ export class ReelGrid {
     this.view.addChild(reelsLayer, mask, this.overlay);
   }
 
+  /** Fired as each reel transitions spinning -> stopped (for staggered tick SFX). */
+  onReelStop?: (index: number) => void;
+  private readonly wasSpinning: boolean[] = [];
+
   get spinning(): boolean {
     return this.reels.some((r) => r.spinning);
   }
@@ -54,11 +58,19 @@ export class ReelGrid {
     this.settled = false;
     for (let r = 0; r < REELS; r++) {
       this.reels[r].start(grid[r], 18 + r * 5); // staggered travel -> cascading stops
+      this.wasSpinning[r] = true;
     }
   }
 
   update(dt: number): void {
     for (const reel of this.reels) reel.update(dt);
+
+    // per-reel stop edges -> staggered ticks
+    for (let r = 0; r < this.reels.length; r++) {
+      const sp = this.reels[r].spinning;
+      if (this.wasSpinning[r] && !sp) this.onReelStop?.(r);
+      this.wasSpinning[r] = sp;
+    }
 
     if (!this.settled && !this.spinning) {
       this.settled = true;

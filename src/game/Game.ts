@@ -1,11 +1,13 @@
 import { Application, Container, Graphics, Text, TextStyle, type Texture } from 'pixi.js';
-import { SlotEngine, PARSHEET, Rng, type SpinResult } from '../model';
+import { SlotEngine, SHEETS, Rng, type ParSheet, type SpinResult } from '../model';
 import { ReelGrid } from '../reel/ReelGrid';
+import { AudioEngine } from '../audio/AudioEngine';
 import { WIDTH, GRID_X, GRID_Y, GRID_H, GRID_W } from './layout';
 
 const START_BALANCE = 25_000;
 const TOP_UP = 25_000;
 const FREE_SPIN_PAUSE_MS = 750; // pacing between auto free spins
+const BIG_WIN_RATIO = 50; // win/bet at which the escalation SFX kicks in
 
 interface Button {
   readonly view: Container;
@@ -13,20 +15,28 @@ interface Button {
   setLabel(text: string): void;
 }
 
+interface Chip {
+  setText(text: string): void;
+}
+
 /**
- * Grey-box game shell. Owns the {@link SlotEngine} (the law), drives the
- * {@link ReelGrid} (the theater), and runs the HUD + free-spins autoplay.
+ * Game shell. Owns the {@link SlotEngine} (the law, sheet-parametric), drives
+ * the {@link ReelGrid} (the theater), the HUD, audio, and free-spins autoplay.
  *
  * The model decides every outcome before the reels move: each spin calls
- * `engine.spin(bet, multiplier)` first, then animates to the returned grid. The
- * UI only ever reads results through the engine's public API.
+ * `engine.spin(bet, multiplier)` first, then animates to the returned grid.
  */
 export class Game {
-  private readonly engine: SlotEngine;
+  private readonly audio = new AudioEngine();
   private readonly grid: ReelGrid;
+  private readonly seed: number;
+
+  private sheetIndex = 0;
+  private sheet: ParSheet = SHEETS[0].sheet;
+  private engine: SlotEngine;
 
   private balance = START_BALANCE;
-  private readonly bets = PARSHEET.bets;
+  private bets = SHEETS[0].sheet.bets;
   private betIndex: number;
   private roundWin = 0;
 
@@ -41,13 +51,17 @@ export class Game {
   private readonly banner: Text;
   private bannerTimer = 0;
   private readonly spinButton: Button;
+  private readonly sheetChip: Chip;
+  private readonly muteChip: Chip;
 
   constructor(app: Application, textures: Map<string, Texture>, seed: number) {
-    this.engine = new SlotEngine(new Rng(seed));
-    this.betIndex = Math.max(0, this.bets.indexOf(PARSHEET.default_bet));
+    this.seed = seed;
+    this.engine = new SlotEngine(new Rng(seed), this.sheet);
+    this.betIndex = Math.max(0, this.bets.indexOf(this.sheet.default_bet));
 
-    const symbolIds = PARSHEET.symbols.map((s) => s.id);
+    const symbolIds = this.sheet.symbols.map((s) => s.id);
     this.grid = new ReelGrid(textures, symbolIds, this.randomGrid(symbolIds));
+    this.grid.onReelStop = (i) => this.audio.reelStop(i);
     app.stage.addChild(this.grid.view);
 
     const hud = new Container();
@@ -79,6 +93,13 @@ export class Game {
     this.makeRoundButton(hud, WIDTH / 2 + 70, 512, '+', () => this.stepBet(+1));
 
     this.spinButton = this.makeSpinButton(hud, () => this.onSpinPressed());
+
+    // sheet switch (left) + sound toggle (right), flanking the spin button
+    this.sheetChip = this.makeChip(hud, 92, 590, this.sheetChipText(), () => this.switchSheet());
+    this.muteChip = this.makeChip(hud, WIDTH - 92, 590, this.muteChipText(), () => {
+      this.audio.toggleMute();
+      this.muteChip.setText(this.muteChipText());
+    });
 
     this.refreshMeters();
 
@@ -121,29 +142,40 @@ export class Game {
   /** One spin: model first (the law), then animate to its grid. */
   private doSpin(multiplier: number): void {
     const bet = this.bets[this.betIndex];
+    this.audio.spinStart();
     const result = this.engine.spin(bet, multiplier);
     this.grid.spinTo(result.grid, () => this.resolveSpin(result));
   }
 
   private resolveSpin(result: SpinResult): void {
+    const bet = this.bets[this.betIndex];
     this.roundWin += result.win;
     this.balance += result.win;
     this.grid.highlight(result.winningLines);
     this.refreshMeters();
 
+    if (result.win > 0) {
+      const ratio = result.win / bet;
+      if (ratio >= BIG_WIN_RATIO) this.audio.bigWin(ratio);
+      else this.audio.win(ratio);
+    }
+
     // Mirror the engine's playRound loop so the consumed RNG stream — and thus
     // the outcomes — match the model exactly: paid spin (×1), then up to N free
     // spins (×mult) with retriggers granting more.
     if (result.bonusTriggered) {
-      this.freeRemaining += PARSHEET.bonus.free_spins;
-      this.freeTotal += PARSHEET.bonus.free_spins;
-      this.flash(`FREE SPINS ×${PARSHEET.bonus.multiplier}`);
+      const isRetrigger = this.freeTotal > 0;
+      this.freeRemaining += this.sheet.bonus.free_spins;
+      this.freeTotal += this.sheet.bonus.free_spins;
+      this.flash(`FREE SPINS ×${this.sheet.bonus.multiplier}`);
+      if (isRetrigger) this.audio.retriggerSting();
+      else this.audio.freeSpinsFanfare();
     }
 
     if (this.freeRemaining > 0) {
       this.freeRemaining--;
       this.refreshFreeCounter();
-      window.setTimeout(() => this.doSpin(PARSHEET.bonus.multiplier), FREE_SPIN_PAUSE_MS);
+      window.setTimeout(() => this.doSpin(this.sheet.bonus.multiplier), FREE_SPIN_PAUSE_MS);
     } else {
       this.endRound();
     }
@@ -159,8 +191,32 @@ export class Game {
 
   private refreshFreeCounter(): void {
     const done = this.freeTotal - this.freeRemaining;
-    this.freeText.text = `FREE SPINS  ${done} / ${this.freeTotal}   ·   ALL WINS ×${PARSHEET.bonus.multiplier}`;
+    this.freeText.text = `FREE SPINS  ${done} / ${this.freeTotal}   ·   ALL WINS ×${this.sheet.bonus.multiplier}`;
     this.spinButton.setLabel('FREE');
+  }
+
+  // --- sheet switching ------------------------------------------------------
+  private switchSheet(): void {
+    if (this.busy) return;
+    this.sheetIndex = (this.sheetIndex + 1) % SHEETS.length;
+    this.sheet = SHEETS[this.sheetIndex].sheet;
+    this.bets = this.sheet.bets;
+    this.betIndex = Math.max(0, this.bets.indexOf(this.sheet.default_bet));
+    this.engine = new SlotEngine(new Rng(this.seed ^ ((this.sheetIndex + 1) * 0x9e3779b9)), this.sheet);
+    this.balance = START_BALANCE; // switching resets balance
+    this.roundWin = 0;
+    this.grid.clearHighlights();
+    this.refreshMeters();
+    this.sheetChip.setText(this.sheetChipText());
+    this.flash(`${SHEETS[this.sheetIndex].label} · RTP ${(this.sheet.theoretical_rtp * 100).toFixed(1)}%`);
+  }
+
+  private sheetChipText(): string {
+    return `${SHEETS[this.sheetIndex].label}\nRTP ${(this.sheet.theoretical_rtp * 100).toFixed(1)}%`;
+  }
+
+  private muteChipText(): string {
+    return `SOUND\n${this.audio.isMuted ? 'OFF' : 'ON'}`;
   }
 
   // --- HUD helpers ----------------------------------------------------------
@@ -184,8 +240,8 @@ export class Game {
 
   private randomGrid(symbolIds: readonly string[]): string[][] {
     const pick = (): string => symbolIds[Math.floor(Math.random() * symbolIds.length)];
-    return Array.from({ length: PARSHEET.layout.reels }, () =>
-      Array.from({ length: PARSHEET.layout.rows }, pick),
+    return Array.from({ length: this.sheet.layout.reels }, () =>
+      Array.from({ length: this.sheet.layout.rows }, pick),
     );
   }
 
@@ -219,6 +275,27 @@ export class Game {
       });
     }
     return val;
+  }
+
+  private makeChip(parent: Container, cx: number, cy: number, text: string, onTap: () => void): Chip {
+    const w = 132;
+    const h = 44;
+    const view = new Container();
+    view.position.set(cx - w / 2, cy - h / 2);
+    view.eventMode = 'static';
+    view.cursor = 'pointer';
+    view.hitArea = { contains: (px: number, py: number) => px >= 0 && px <= w && py >= 0 && py <= h };
+    const bg = new Graphics().roundRect(0, 0, w, h, 12).fill({ color: 0x1d2540, alpha: 0.92 }).stroke({ width: 2, color: 0xffd24a, alpha: 0.5 });
+    const t = new Text({
+      text,
+      style: new TextStyle({ fontFamily: 'Arial', fontSize: 13, fontWeight: 'bold', fill: 0xffe9b8, align: 'center', letterSpacing: 1, lineHeight: 16 }),
+    });
+    t.anchor.set(0.5);
+    t.position.set(w / 2, h / 2);
+    view.addChild(bg, t);
+    view.on('pointertap', onTap);
+    parent.addChild(view);
+    return { setText: (s: string) => { t.text = s; } };
   }
 
   private makeRoundButton(parent: Container, cx: number, cy: number, glyph: string, onPress: () => void): void {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { PARSHEET } from '../engine';
+import { PARSHEET, CASINO_PARSHEET } from '../engine';
 import { computeTheoretical } from '../theory';
 
 describe('par sheet integrity', () => {
@@ -33,5 +33,30 @@ describe('par sheet integrity', () => {
   it('embedded theoretical_rtp matches the theory calc (no drift between data and code)', () => {
     const t = computeTheoretical(PARSHEET);
     expect(PARSHEET.theoretical_rtp).toBeCloseTo(t.totalRtp, 6);
+  });
+});
+
+describe('casino par sheet', () => {
+  it('shares the gift structure (same layout/lines/symbols/weights)', () => {
+    expect(CASINO_PARSHEET.layout).toEqual({ reels: 5, rows: 3 });
+    expect(CASINO_PARSHEET.lines).toBe(15);
+    expect(CASINO_PARSHEET.symbols).toHaveLength(9);
+    const totalWeight = CASINO_PARSHEET.symbols.reduce((a, s) => a + s.weight, 0);
+    expect(totalWeight).toBe(95);
+    // weights match gift exactly (so hit/bonus frequencies are preserved)
+    for (const s of CASINO_PARSHEET.symbols) {
+      const gift = PARSHEET.symbols.find((g) => g.id === s.id);
+      expect(s.weight).toBe(gift?.weight);
+    }
+  });
+
+  it('embedded theoretical_rtp matches the theory calc', () => {
+    const t = computeTheoretical(CASINO_PARSHEET);
+    expect(CASINO_PARSHEET.theoretical_rtp).toBeCloseTo(t.totalRtp, 6);
+  });
+
+  it('is retuned to a balanced 94.5–95.5% RTP', () => {
+    expect(CASINO_PARSHEET.theoretical_rtp).toBeGreaterThan(0.945);
+    expect(CASINO_PARSHEET.theoretical_rtp).toBeLessThan(0.955);
   });
 });

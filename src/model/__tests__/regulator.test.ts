@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { PARSHEET } from '../engine';
+import { PARSHEET, CASINO_PARSHEET } from '../engine';
 import { computeTheoretical } from '../theory';
 import { simulate } from '../simulate';
 
@@ -76,5 +76,58 @@ describe('regulator — million-spin review', () => {
     expect(Math.abs(stats.baseHitFreq - BANDS.baseHitFreq.center)).toBeLessThan(BANDS.baseHitFreq.tol);
     // Max single-round exposure capped.
     expect(stats.maxRoundWinX).toBeLessThan(BANDS.maxRoundWinXCap);
+  }, 180_000);
+});
+
+// ============================================================================
+//  CASINO SHEET — balanced design targets (P4). Same engine/seed, retuned pays.
+// ============================================================================
+const CASINO_BANDS = {
+  rtp: { min: 0.945, max: 0.955 }, // design target RTP band
+  rtpAbsTolerance: 0.01, // measured within ±1.0% of theoretical (self-consistency)
+  bonusFreq: { min: 0.015, max: 0.025 },
+  baseHitFreq: { min: 0.3, max: 0.45 },
+  freeSpinsPerTrigger: { min: 9.5, max: 10.1 },
+  maxRoundWinXCap: 1000,
+};
+
+describe('regulator — million-spin review (casino sheet)', () => {
+  it(`runs ${SPINS.toLocaleString()} seeded spins on the casino par sheet`, () => {
+    const theory = computeTheoretical(CASINO_PARSHEET);
+    const stats = simulate({ spins: SPINS, seed: SEED, bet: BET, sheet: CASINO_PARSHEET });
+
+    /* eslint-disable no-console */
+    console.log('\n======================================================================');
+    console.log('  CELESTIAL FORTUNE — CASINO PAR SHEET REVIEW (' + SPINS.toLocaleString() + ' spins)');
+    console.log('  seed=0x' + SEED.toString(16) + '  bet=' + BET + '  stake=' + stats.totalStake.toLocaleString());
+    console.log('----------------------------------------------------------------------');
+    console.log('  metric                      theoretical        measured');
+    console.log('  RTP (total)                 ' + fmtPct(theory.totalRtp).padEnd(15) + '  ' + fmtPct(stats.rtp));
+    console.log('    · base game               ' + fmtPct(theory.baseRtp).padEnd(15) + '  —');
+    console.log('    · free spins              ' + fmtPct(theory.bonusRtp).padEnd(15) + '  —');
+    console.log('  bonus trigger freq          ' + fmtPct(theory.scatterTriggerProb).padEnd(15) + '  ' + fmtPct(stats.bonusFreq));
+    console.log('  avg free spins / trigger    ' + theory.expectedFreeSpinsPerTrigger.toFixed(3).padEnd(15) + '  ' + stats.avgFreeSpinsPerTrigger.toFixed(3));
+    console.log('  base-game line-hit freq     —' + '                ' + fmtPct(stats.baseHitFreq));
+    console.log('  max single-round win (×bet) —' + '                ' + stats.maxRoundWinX.toFixed(1));
+    console.log('======================================================================');
+    console.log('  Balanced casino economics: RTP in [94.5%, 95.5%].');
+    console.log('======================================================================\n');
+    /* eslint-enable no-console */
+
+    // Design-target bands.
+    expect(stats.rtp).toBeGreaterThan(CASINO_BANDS.rtp.min);
+    expect(stats.rtp).toBeLessThan(CASINO_BANDS.rtp.max);
+    // Self-consistency: measured tracks theoretical.
+    expect(Math.abs(stats.rtp - theory.totalRtp)).toBeLessThan(CASINO_BANDS.rtpAbsTolerance);
+    // Bonus trigger frequency in target range.
+    expect(stats.bonusFreq).toBeGreaterThan(CASINO_BANDS.bonusFreq.min);
+    expect(stats.bonusFreq).toBeLessThan(CASINO_BANDS.bonusFreq.max);
+    // Base-game hit frequency in target range.
+    expect(stats.baseHitFreq).toBeGreaterThan(CASINO_BANDS.baseHitFreq.min);
+    expect(stats.baseHitFreq).toBeLessThan(CASINO_BANDS.baseHitFreq.max);
+    // Free-spins length and max exposure.
+    expect(stats.avgFreeSpinsPerTrigger).toBeGreaterThan(CASINO_BANDS.freeSpinsPerTrigger.min);
+    expect(stats.avgFreeSpinsPerTrigger).toBeLessThan(CASINO_BANDS.freeSpinsPerTrigger.max);
+    expect(stats.maxRoundWinX).toBeLessThan(CASINO_BANDS.maxRoundWinXCap);
   }, 180_000);
 });

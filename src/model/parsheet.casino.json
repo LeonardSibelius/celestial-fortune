@@ -1,0 +1,153 @@
+{
+  "name": "Celestial Fortune — Casino",
+  "version": "0.1.0",
+  "source": "retuned to 94.5-95.5% RTP (gift weights, scaled paytable)",
+  "currency": "credits",
+  "layout": {
+    "reels": 5,
+    "rows": 3
+  },
+  "spin_model": "independent_cells",
+  "bets": [15, 30, 75, 150, 300, 750, 1500],
+  "default_bet": 150,
+  "lines": 15,
+  "pays_direction": "left_to_right",
+  "min_match": 3,
+  "symbols": [
+    {
+      "id": "star",
+      "name": "Star",
+      "weight": 22,
+      "pays": {
+        "3": 4,
+        "4": 11,
+        "5": 21
+      }
+    },
+    {
+      "id": "moon",
+      "name": "Moon",
+      "weight": 20,
+      "pays": {
+        "3": 4,
+        "4": 11,
+        "5": 28
+      }
+    },
+    {
+      "id": "galaxy",
+      "name": "Galaxy",
+      "weight": 16,
+      "pays": {
+        "3": 7,
+        "4": 18,
+        "5": 42
+      }
+    },
+    {
+      "id": "saturn",
+      "name": "Saturn",
+      "weight": 12,
+      "pays": {
+        "3": 14,
+        "4": 35,
+        "5": 70
+      }
+    },
+    {
+      "id": "mars",
+      "name": "Mars",
+      "weight": 9,
+      "pays": {
+        "3": 21,
+        "4": 63,
+        "5": 154
+      }
+    },
+    {
+      "id": "crown",
+      "name": "Crown",
+      "weight": 5,
+      "pays": {
+        "3": 35,
+        "4": 126,
+        "5": 350
+      }
+    },
+    {
+      "id": "seven",
+      "name": "Lucky 7",
+      "weight": 3,
+      "pays": {
+        "3": 70,
+        "4": 210,
+        "5": 700
+      }
+    },
+    {
+      "id": "wild",
+      "name": "Wild",
+      "weight": 4,
+      "pays": {
+        "3": 70,
+        "4": 210,
+        "5": 700
+      },
+      "wild": true
+    },
+    {
+      "id": "scatter",
+      "name": "Earth",
+      "weight": 4,
+      "pays": {
+        "3": 0,
+        "4": 0,
+        "5": 0
+      },
+      "scatter": true
+    }
+  ],
+  "reels": [
+    {
+      "strip": ["star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "mars", "mars", "mars", "mars", "mars", "mars", "mars", "mars", "mars", "crown", "crown", "crown", "crown", "crown", "seven", "seven", "seven", "wild", "wild", "wild", "wild", "scatter", "scatter", "scatter", "scatter"]
+    },
+    {
+      "strip": ["star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "mars", "mars", "mars", "mars", "mars", "mars", "mars", "mars", "mars", "crown", "crown", "crown", "crown", "crown", "seven", "seven", "seven", "wild", "wild", "wild", "wild", "scatter", "scatter", "scatter", "scatter"]
+    },
+    {
+      "strip": ["star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "mars", "mars", "mars", "mars", "mars", "mars", "mars", "mars", "mars", "crown", "crown", "crown", "crown", "crown", "seven", "seven", "seven", "wild", "wild", "wild", "wild", "scatter", "scatter", "scatter", "scatter"]
+    },
+    {
+      "strip": ["star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "mars", "mars", "mars", "mars", "mars", "mars", "mars", "mars", "mars", "crown", "crown", "crown", "crown", "crown", "seven", "seven", "seven", "wild", "wild", "wild", "wild", "scatter", "scatter", "scatter", "scatter"]
+    },
+    {
+      "strip": ["star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "star", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "moon", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "galaxy", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "saturn", "mars", "mars", "mars", "mars", "mars", "mars", "mars", "mars", "mars", "crown", "crown", "crown", "crown", "crown", "seven", "seven", "seven", "wild", "wild", "wild", "wild", "scatter", "scatter", "scatter", "scatter"]
+    }
+  ],
+  "paylines": [
+    [1, 1, 1, 1, 1],
+    [0, 0, 0, 0, 0],
+    [2, 2, 2, 2, 2],
+    [0, 1, 2, 1, 0],
+    [2, 1, 0, 1, 2],
+    [0, 0, 1, 2, 2],
+    [2, 2, 1, 0, 0],
+    [1, 0, 1, 2, 1],
+    [1, 2, 1, 0, 1],
+    [0, 1, 1, 1, 0],
+    [2, 1, 1, 1, 2],
+    [1, 0, 0, 0, 1],
+    [1, 2, 2, 2, 1],
+    [0, 1, 0, 1, 0],
+    [2, 1, 2, 1, 2]
+  ],
+  "bonus": {
+    "trigger_symbol": "scatter",
+    "trigger_count": 3,
+    "free_spins": 8,
+    "multiplier": 3,
+    "retrigger": true,
+    "scope": "anywhere"
+  },
+  "theoretical_rtp": 0.95331119
+}
