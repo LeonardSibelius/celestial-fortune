@@ -1,4 +1,5 @@
-import { Graphics } from 'pixi.js';
+import { Assets, Graphics, Sprite, type Container, type Texture } from 'pixi.js';
+import coinUrl from '../factory/coin_ue.png';
 
 /**
  * Placeholder symbol set for the P0 factory spike.
@@ -134,4 +135,52 @@ export function drawSymbol(g: Graphics, type: number, cell: number): void {
       break;
     }
   }
+}
+
+/**
+ * UE-rendered symbols: `name` -> { atlas/PNG url, contentFraction }.
+ *
+ * `contentFraction` is the share of the square texture canvas the opaque art
+ * actually occupies (the rest is transparent margin), so we can scale a sprite
+ * to sit in the cell at the same visual size as the procedurally-drawn symbols.
+ * As more atlases come out of the factory, add them here — everything else in
+ * the reel keeps working unchanged.
+ */
+interface TexturedSymbol {
+  readonly url: string;
+  readonly contentFraction: number;
+}
+
+export const SYMBOL_TEXTURES: Readonly<Record<string, TexturedSymbol>> = {
+  coin: { url: coinUrl, contentFraction: 0.43 }, // 220px coin in a 512px canvas
+};
+
+/** Load every UE-rendered symbol texture. Returns a name -> Texture map. */
+export async function loadSymbolTextures(): Promise<Map<string, Texture>> {
+  const textures = new Map<string, Texture>();
+  for (const [name, def] of Object.entries(SYMBOL_TEXTURES)) {
+    textures.set(name, await Assets.load<Texture>(def.url));
+  }
+  return textures;
+}
+
+/**
+ * Build the display object for symbol `type`, centered on (0, 0) and sized to
+ * the cell. Uses a UE-rendered `Sprite` when a texture is available for that
+ * symbol, otherwise falls back to the procedural `Graphics` drawing.
+ */
+export function createSymbol(type: number, cell: number, textures: Map<string, Texture>): Container {
+  const def = SYMBOLS[type];
+  const texture = textures.get(def.name);
+  if (texture) {
+    const sprite = new Sprite(texture);
+    sprite.anchor.set(0.5);
+    // Fit the opaque art to the same inner box the drawn symbols use (cell * 0.74).
+    const inner = cell * 0.74;
+    sprite.width = sprite.height = inner / SYMBOL_TEXTURES[def.name].contentFraction;
+    return sprite;
+  }
+  const g = new Graphics();
+  drawSymbol(g, type, cell);
+  return g;
 }

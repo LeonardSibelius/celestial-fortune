@@ -1,5 +1,5 @@
-import { Container, Graphics } from 'pixi.js';
-import { SYMBOLS, drawSymbol } from './symbols';
+import { Container, type Texture } from 'pixi.js';
+import { SYMBOLS, createSymbol } from './symbols';
 
 export const CELL = 120;
 export const VISIBLE = 3;
@@ -44,16 +44,14 @@ export class Reel {
 
   private onStop?: (centerSymbol: number) => void;
 
-  constructor(onStop?: (centerSymbol: number) => void) {
+  constructor(textures: Map<string, Texture>, onStop?: (centerSymbol: number) => void) {
     this.onStop = onStop;
     this.strip = SYMBOLS.map((_, i) => i);
     this.stripPx = this.strip.length * CELL;
 
     for (let i = 0; i < this.strip.length; i++) {
       const cell = new Container();
-      const g = new Graphics();
-      drawSymbol(g, this.strip[i], CELL);
-      cell.addChild(g);
+      cell.addChild(createSymbol(this.strip[i], CELL, textures));
       cell.x = CELL / 2;
       this.view.addChild(cell);
       this.cells.push(cell);

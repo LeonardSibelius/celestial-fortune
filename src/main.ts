@@ -1,5 +1,6 @@
 import { Application, Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { Reel, CELL, VISIBLE } from './reel/Reel';
+import { loadSymbolTextures } from './reel/symbols';
 import './style.css';
 
 const WIDTH = 460;
@@ -24,7 +25,8 @@ async function main(): Promise<void> {
   buildCabinet(app.stage);
 
   // --- Reel + masked window -------------------------------------------------
-  const reel = new Reel();
+  const textures = await loadSymbolTextures();
+  const reel = new Reel(textures);
   reel.view.x = WINDOW_X;
   reel.view.y = WINDOW_Y;
 
