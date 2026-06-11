@@ -19,6 +19,17 @@ async function main(): Promise<void> {
   });
   document.getElementById('app')!.appendChild(app.canvas);
 
+  // Fit-to-window: scale the fixed-design-size cabinet to fill the viewport.
+  // Pure CSS transform — flex centering keeps it centered, and the 2x backing
+  // resolution keeps it sharp up to ~2x scale. Benefits big monitors AND the
+  // Leonard Sibelius in-game embed (UE Chromium widget).
+  const fit = (): void => {
+    const s = Math.min(window.innerWidth / WIDTH, window.innerHeight / HEIGHT) * 0.97;
+    app.canvas.style.transform = `scale(${s})`;
+  };
+  window.addEventListener('resize', fit);
+  fit();
+
   // seeded starfield behind everything
   const starfield = new Starfield(STARFIELD_SEED);
   app.stage.addChild(starfield.view);
